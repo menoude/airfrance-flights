@@ -1,31 +1,62 @@
-use reqwest::header::{self as headers_list, HeaderValue};
+use {
+    reqwest::header::{self as headers_list, HeaderValue},
+    termion::color,
+};
 
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate lazy_static;
 
-pub fn build_headers_map() -> reqwest::header::HeaderMap {
-    let mut headers = reqwest::header::HeaderMap::new();
-    headers.insert(
+lazy_static! {
+    pub static ref CLIENT: reqwest::blocking::Client = reqwest::blocking::Client::new();
+    pub static ref HEADERS: reqwest::header::HeaderMap = {
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert(
         headers_list::ACCEPT,
         HeaderValue::from_static("application/hal+json;profile=com.afklm.b2c.flightoffers.available-offers.v1;charset=utf8"));
-    headers.insert(
-        headers_list::CONTENT_TYPE,
-        "application/json".parse().unwrap(),
-    );
-    headers.insert(
-        headers_list::ACCEPT_LANGUAGE,
-        HeaderValue::from_static("en-US"),
-    );
-    headers.insert("AFKL-TRAVEL-Host", HeaderValue::from_static("KL"));
-    headers.insert("AFKL-TRAVEL-Country", HeaderValue::from_static("NL"));
-    headers.insert(
-        "api-key",
-        std::env::var("API_KEY")
-            .expect("env var missing")
-            .parse()
-            .unwrap(),
-    );
-    headers
+        headers.insert(
+            headers_list::CONTENT_TYPE,
+            "application/json".parse().unwrap(),
+        );
+        headers.insert(
+            headers_list::ACCEPT_LANGUAGE,
+            HeaderValue::from_static("en-US"),
+        );
+        headers.insert("AFKL-TRAVEL-Host", HeaderValue::from_static("KL"));
+        headers.insert("AFKL-TRAVEL-Country", HeaderValue::from_static("NL"));
+        headers.insert(
+            "api-key",
+            std::env::var("API_KEY")
+                .expect("env var missing")
+                .parse()
+                .unwrap(),
+        );
+        headers
+    };
+}
+
+pub fn init() {
+    lazy_static::initialize(&CLIENT);
+    lazy_static::initialize(&HEADERS);
+}
+
+pub fn execute_check(date: &'static str) {
+    let time = chrono::Local::now().time().format("%H:%M:%S").to_string();
+    match date_availability(&CLIENT, HEADERS.to_owned(), date) {
+        false => println!(
+            "{}{} | No flight available.{}",
+            color::Fg(color::Red),
+            time,
+            color::Fg(color::Reset)
+        ),
+        true => println!(
+            "{}{} | Some flight available!!!!!!!!!!!{}",
+            color::Fg(color::Green),
+            time,
+            color::Fg(color::Reset)
+        ),
+    }
 }
 
 pub fn date_availability(
@@ -47,12 +78,20 @@ pub fn date_availability(
         }],
     };
 
-    let response = client
-        .post("https://api.airfranceklm.com/opendata/offers/v1/available-offers")
-        .body(serde_json::to_vec(&data).expect("Can't serialize data"))
-        .headers(headers)
-        .send()
-        .unwrap();
+    let response = loop {
+        match client
+            .post("https://api.airfranceklm.com/opendata/offers/v1/available-offers")
+            .body(serde_json::to_vec(&data).expect("Can't serialize data"))
+            .headers(headers.clone())
+            .send()
+        {
+            Ok(reponse) => break reponse,
+            Err(e) if e.is_request() => {
+                println!("Request error: {}", e)
+            }
+            Err(e) => panic!("{}", e),
+        }
+    };
     let body: AirFranceResponse = serde_json::from_reader(response).unwrap();
     match body {
         AirFranceResponse::Warning { .. } => false,
