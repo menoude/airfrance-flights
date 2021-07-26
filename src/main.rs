@@ -6,6 +6,7 @@ use {
 
 fn main() {
     init();
+
     let air_france_checker = flight_checker::AirFranceChecker {
         date: "2021-07-28",
         api_key: std::env::var("API_KEY").expect("Set API_KEY env var"),
