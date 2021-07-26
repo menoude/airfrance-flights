@@ -15,7 +15,7 @@ fn main() {
     air_france_checker.execute_check();
 
     let mut scheduler = Scheduler::new();
-    scheduler.every(1.minutes()).run(move || {
+    scheduler.every(2.minutes()).run(move || {
         air_france_checker.execute_check();
     });
 
