@@ -1,4 +1,4 @@
-use crate::CLIENT;
+use crate::{CheckAvailability, CLIENT};
 use reqwest::header::{self as headers_list, HeaderValue};
 
 pub struct AirFranceChecker {
@@ -6,7 +6,7 @@ pub struct AirFranceChecker {
     pub date: &'static str,
 }
 
-impl crate::CheckAvailability for AirFranceChecker {
+impl CheckAvailability for AirFranceChecker {
     fn date(&self) -> &'static str {
         self.date
     }
