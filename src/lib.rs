@@ -1,7 +1,8 @@
 mod air_france;
+mod transavia;
 // mod asl;
 
-pub use air_france::AirFranceChecker;
+pub use {air_france::AirFranceChecker, transavia::TransaviaChecker};
 
 use termion::color;
 
