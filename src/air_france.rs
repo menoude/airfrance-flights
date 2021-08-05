@@ -11,7 +11,7 @@ impl CheckAvailability for AirFranceChecker {
         self.date
     }
 
-    fn company() -> &'static str {
+    fn company(&self) -> &'static str {
         "Air France"
     }
 

@@ -43,7 +43,7 @@ pub fn init() {
 
 pub trait CheckAvailability {
     fn date(&self) -> &'static str;
-    fn company() -> &'static str;
+    fn company(&self) -> &'static str;
 
     fn execute_check(&self) {
         let time = chrono::Local::now().time().format("%H:%M:%S").to_string();
@@ -52,7 +52,7 @@ pub trait CheckAvailability {
                 "{}{} | No {} flight available for {}.{}",
                 color::Fg(color::Red),
                 time,
-                Self::company(),
+                self.company(),
                 self.date(),
                 color::Fg(color::Reset)
             ),
@@ -61,12 +61,12 @@ pub trait CheckAvailability {
                     "{}{} | Available {} flight for {}{}",
                     color::Fg(color::Green),
                     time,
-                    Self::company(),
+                    self.company(),
                     self.date(),
                     color::Fg(color::Reset)
                 );
                 for receiver in RECEIVERS_PHONE_NUMBERS.iter() {
-                    send_twilio_sms(Self::company(), self.date(), receiver).unwrap();
+                    send_twilio_sms(self.company(), self.date(), receiver).unwrap();
                 }
             }
         }

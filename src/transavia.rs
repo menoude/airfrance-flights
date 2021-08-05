@@ -11,7 +11,7 @@ impl CheckAvailability for TransaviaChecker {
         self.date
     }
 
-    fn company() -> &'static str {
+    fn company(&self) -> &'static str {
         "Transavia"
     }
 

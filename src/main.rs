@@ -10,28 +10,26 @@ fn main() {
     let air_france_api_key = std::env::var("API_KEY").expect("Set API_KEY env var");
     let transavia_api_key = std::env::var("TRANSAVIA_API_KEY").expect("Set API_KEY env var");
 
-    let air_france_aug_fourth = AirFranceChecker {
-        date: "2021-08-04",
-        api_key: air_france_api_key.clone(),
-    };
-    let air_france_aug_eleventh = AirFranceChecker {
-        date: "2021-08-11",
-        api_key: air_france_api_key,
-    };
-    let transavia_aug_5th = TransaviaChecker {
-        date: "2021-08-05",
-        api_key: transavia_api_key,
-    };
-
-    air_france_aug_fourth.execute_check();
-    air_france_aug_eleventh.execute_check();
-    transavia_aug_5th.execute_check();
+    let checks: Vec<Box<dyn CheckAvailability + Send + Sync>> = vec![
+        Box::new(AirFranceChecker {
+            date: "2021-08-25",
+            api_key: air_france_api_key,
+        }),
+        Box::new(TransaviaChecker {
+            date: "2021-08-12",
+            api_key: transavia_api_key.clone(),
+        }),
+        Box::new(TransaviaChecker {
+            date: "2021-08-26",
+            api_key: transavia_api_key,
+        }),
+    ];
 
     let mut scheduler = Scheduler::new();
     scheduler.every(45.seconds()).run(move || {
-        air_france_aug_fourth.execute_check();
-        air_france_aug_eleventh.execute_check();
-        transavia_aug_5th.execute_check();
+        for check in &checks {
+            check.execute_check();
+        }
     });
 
     loop {
